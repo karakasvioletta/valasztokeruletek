@@ -1,0 +1,39 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtuális környezet
+.venv/
+venv/
+env/
+
+# Nyers és feldolgozott adatok
+data/
+*.csv
+*.xlsx
+*.xls
+
+# Naplók
+*.log
+
+# Környezetfüggő beállítások és titkok
+.env
+
+# Operációs rendszer és szerkesztő
+.DS_Store
+Thumbs.db
+.vscode/
+
+#mappák
+kulonbsegek/
+valasztasi_adatok/
+
+#egyebek
+/vizsgalodas.py
+/2010.py
+/2014.2.py
+/2014.py
+/kodok_osszehasonlitasa.py
+/kodok2.py
+scripts/dolgok.ipynb
+/download_data2.py
