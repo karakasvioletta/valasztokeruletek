@@ -1,140 +1,150 @@
 import pandas as pd
-from config import RAW_DATA_DIR, PROCESSED_DATA_DIR, FILE_2022, FILE_2026
+from config import PROCESSED_DATA_DIR, FILE_2022, FILE_2026
 
 
-fajl_2022 = FILE_2022
-fajl_2026 = FILE_2026
+def build(adat22=None, adat26=None):
 
-
-PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-kimenet22_fajl = PROCESSED_DATA_DIR / "szavazokorok_2022.csv"
-kimenet26_fajl = PROCESSED_DATA_DIR / "szavazokorok_2026.csv"
-
-def csv_beolvasasa(fajl, szukseges_oszlopok):
-    """CSV beolvasása az elválasztójel automatikus felismerésével."""
-    fejlec = pd.read_csv(
-        fajl,
-        sep=None,
-        engine="python",
-        encoding="utf-8-sig",
-        nrows=0,
-    )
-
-    # Az oszlopnevek elejéről és végéről eltávolítjuk a szóközöket.
-    fejlec_oszlopok = [oszlop.strip() for oszlop in fejlec.columns]
-
-    # Megnézzük, hogy minden szükséges oszlop létezik-e.
-    hianyzo = [
-        oszlop for oszlop in szukseges_oszlopok
-        if oszlop not in fejlec_oszlopok
-    ]
-
-    if hianyzo:
-        raise ValueError(
-            f"A(z) {fajl.name} fájlban nem találhatók ezek az oszlopok: "
-            f"{hianyzo}\n"
-            f"A fájl oszlopai: {fejlec_oszlopok}"
+    if adat22 is None:
+        adat22 = pd.read_csv(
+            FILE_2022,
+            sep=None,
+            engine="python",
+            encoding="utf-8-sig",
+            dtype=str,
+            usecols=[
+                "MEGYE_KÓD",
+                "TELEPÜLÉS_KÓD",
+                "OEVK",
+                "SZAVAZÓKÖR_SORSZÁM",
+                "SZAVAZÓKÖR_CÍM",
+            ],
         )
 
-    return pd.read_csv(
-        fajl,
-        sep=None,
-        engine="python",
+    if adat26 is None:
+        adat26 = pd.read_csv(
+            FILE_2026,
+            sep=None,
+            engine="python",
+            encoding="utf-8-sig",
+            dtype=str,
+            usecols=[
+                "Vármegye kód",
+                "Település kód",
+                "OEVK",
+                "Szavazókör",
+                "Szavazókör cím",
+            ],
+        )
+
+    kimenet22_fajl = PROCESSED_DATA_DIR / "szavazokorok_2022.csv"
+    kimenet26_fajl = PROCESSED_DATA_DIR / "szavazokorok_2026.csv"
+
+    # ==================================================
+    # 2022-ES SZAVAZÓKÖRÖK
+    # ==================================================
+
+    kimenet22 = adat22[
+        [
+            "MEGYE_KÓD",
+            "TELEPÜLÉS_KÓD",
+            "OEVK",
+            "SZAVAZÓKÖR_SORSZÁM",
+            "SZAVAZÓKÖR_CÍM",
+        ]
+    ].copy()
+
+    # Településazonosító létrehozása
+    kimenet22["település_azonosító"] = (
+        kimenet22["MEGYE_KÓD"]
+        + kimenet22["TELEPÜLÉS_KÓD"]
+    )
+
+    # Végleges oszlopok
+    kimenet22 = kimenet22[
+        [
+            "település_azonosító",
+            "OEVK",
+            "SZAVAZÓKÖR_SORSZÁM",
+            "SZAVAZÓKÖR_CÍM",
+        ]
+    ]
+
+    kimenet22 = (
+        kimenet22
+        .drop_duplicates()
+        .sort_values(
+            [
+                "település_azonosító",
+                "OEVK",
+                "SZAVAZÓKÖR_SORSZÁM",
+            ]
+        )
+        .reset_index(drop=True)
+    )
+
+    kimenet22.to_csv(
+        kimenet22_fajl,
+        index=False,
         encoding="utf-8-sig",
-        dtype=str,
-        usecols=szukseges_oszlopok,
     )
 
+    # ==================================================
+    # 2026-OS SZAVAZÓKÖRÖK
+    # ==================================================
 
-print("2022-es adatok betöltése...")
+    kimenet26 = adat26[
+        [
+            "Vármegye kód",
+            "Település kód",
+            "OEVK",
+            "Szavazókör",
+            "Szavazókör cím",
+        ]
+    ].copy()
 
-adat22 = csv_beolvasasa(
-    fajl_2022,
-    [
-        "MEGYE_KÓD",
-        "TELEPÜLÉS_KÓD",
-        "OEVK",
-        "SZAVAZÓKÖR_SORSZÁM",
-        "SZAVAZÓKÖR_CÍM",
-    ],
-)
-
-print("2026-os adatok betöltése...")
-
-adat26 = csv_beolvasasa(
-    fajl_2026,
-    [
-        "Vármegye kód",
-        "Település kód",
-        "OEVK",
-        "Szavazókör",
-        "Szavazókör cím",
-    ],
-)
-
-# Településazonosító létrehozása.
-# A kódokat szövegként kezeljük, hogy a kezdő nullák megmaradjanak.
-for adat, megye_oszlop, telepules_oszlop in [
-    (adat22, "MEGYE_KÓD", "TELEPÜLÉS_KÓD"),
-    (adat26, "Vármegye kód", "Település kód"),
-]:
-    adat[megye_oszlop] = adat[megye_oszlop].fillna("").str.strip()
-    adat[telepules_oszlop] = adat[telepules_oszlop].fillna("").str.strip()
-
-    adat["település_azonosító"] = (
-        adat[megye_oszlop] + adat[telepules_oszlop]
+    # Településazonosító létrehozása
+    kimenet26["település_azonosító"] = (
+        kimenet26["Vármegye kód"]
+        + kimenet26["Település kód"]
     )
 
-# A 2022-es kimeneti tábla elkészítése.
-kimenet22 = adat22[
-    [
-        "település_azonosító",
-        "OEVK",
-        "SZAVAZÓKÖR_SORSZÁM",
-        "SZAVAZÓKÖR_CÍM",
+    # Végleges oszlopok
+    kimenet26 = kimenet26[
+        [
+            "település_azonosító",
+            "OEVK",
+            "Szavazókör",
+            "Szavazókör cím",
+        ]
     ]
-].copy()
 
-kimenet22 = kimenet22.fillna("").astype(str).apply(
-    lambda oszlop: oszlop.str.strip()
-).drop_duplicates()
+    kimenet26 = (
+        kimenet26
+        .drop_duplicates()
+        .sort_values(
+            [
+                "település_azonosító",
+                "OEVK",
+                "Szavazókör",
+            ]
+        )
+        .reset_index(drop=True)
+    )
 
-kimenet22 = kimenet22.sort_values(
-    ["település_azonosító", "OEVK", "SZAVAZÓKÖR_SORSZÁM"]
-)
+    kimenet26.to_csv(
+        kimenet26_fajl,
+        index=False,
+        encoding="utf-8-sig",
+    )
 
-kimenet22.to_csv(
-    kimenet22_fajl,
-    index=False,
-    encoding="utf-8-sig",
-)
+    # ==================================================
+    # ÖSSZESÍTÉS
+    # ==================================================
 
-# A 2026-os kimeneti tábla elkészítése.
-kimenet26 = adat26[
-    [
-        "település_azonosító",
-        "OEVK",
-        "Szavazókör",
-        "Szavazókör cím",
-    ]
-].copy()
+    print("\nElkészült a két szavazóköri fájl!")
+    print(f"2022-es rekordok száma: {len(kimenet22):,}")
+    print(f"2026-os rekordok száma: {len(kimenet26):,}")
+    print("Mentési hely:", PROCESSED_DATA_DIR)
 
-kimenet26 = kimenet26.fillna("").astype(str).apply(
-    lambda oszlop: oszlop.str.strip()
-).drop_duplicates()
-
-kimenet26 = kimenet26.sort_values(
-    ["település_azonosító", "OEVK", "Szavazókör"]
-)
-
-kimenet26.to_csv(
-    kimenet26_fajl,
-    index=False,
-    encoding="utf-8-sig",
-)
-
-print("\nElkészült a két kimeneti fájl!")
-print(f"2022-es rekordok száma: {len(kimenet22):,}")
-print(f"2026-os rekordok száma: {len(kimenet26):,}")
-print("Mentési hely:", PROCESSED_DATA_DIR)
+if __name__ == "__main__":
+    build()

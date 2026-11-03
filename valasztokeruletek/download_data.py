@@ -273,11 +273,24 @@ def scrape_2010_city(name, v21_url):
         raise ValueError("Nem találtam körzetadatokat a v22 oldalon.")
 
     _, _, data = max(candidates, key=lambda x: x[0])
-    width = max(map(len, data))
-    df = pd.DataFrame(data, columns=[f"Oszlop_{i}" for i in range(1, width + 1)])
+
+    # Minden adatsort pontosan 11 mezőre igazítunk.
+    # Ez biztosítja, hogy a 2010-es oszlopok megfeleljenek
+    # a 2014-es adatok oszlopszerkezetének.
+    data = [
+        (row + [""] * len(COLS_2014))[:len(COLS_2014)]
+        for row in data
+    ]
+
+    # A 2014-es adatokkal megegyező oszlopnevek használata.
+    df = pd.DataFrame(data, columns=COLS_2014)
+
+    # Metaadatok hozzáadása, a 2014-es oszlopsorrenddel megegyezően.
     df.insert(0, "Település", name)
+    df.insert(0, "Megye", "")
     df["Forrás URL"] = v22_url
     df["Év"] = "2010"
+
     return df
 
 
@@ -330,6 +343,28 @@ COLS_2014 = [
     "Címe",
 ]
 
+MEGYE_KODOK_2014 = {
+    "M01": "Budapest",
+    "M02": "Baranya",
+    "M03": "Bács-Kiskun",
+    "M04": "Békés",
+    "M05": "Borsod-Abaúj-Zemplén",
+    "M06": "Csongrád",
+    "M07": "Fejér",
+    "M08": "Győr-Moson-Sopron",
+    "M09": "Hajdú-Bihar",
+    "M10": "Heves",
+    "M11": "Jász-Nagykun-Szolnok",
+    "M12": "Komárom-Esztergom",
+    "M13": "Nógrád",
+    "M14": "Pest",
+    "M15": "Somogy",
+    "M16": "Szabolcs-Szatmár-Bereg",
+    "M17": "Tolna",
+    "M18": "Vas",
+    "M19": "Veszprém",
+    "M20": "Zala",
+}
 
 def discover_2014_cities():
     """
@@ -358,6 +393,22 @@ def discover_2014_cities():
 
 
 def scrape_2014_city(name, v21_url):
+    # Megye kinyerése a településoldal URL-jéből
+    match = re.search(r"/(M\d{2})/T\d{3}/v21\.html$", v21_url, re.I)
+
+    if not match:
+        raise ValueError(
+            f"Nem sikerült kinyerni a megye kódját az URL-ből: {v21_url}"
+        )
+
+    megye_kod = match.group(1).upper()
+    megye = MEGYE_KODOK_2014.get(megye_kod)
+
+    if megye is None:
+        raise ValueError(
+            f"Ismeretlen megyei kód: {megye_kod} | URL: {v21_url}"
+        )
+
     soup = get_soup(v21_url)
     v22_url = None
 
@@ -409,10 +460,13 @@ def scrape_2014_city(name, v21_url):
         raise ValueError("A táblában nem maradt adatsor.")
 
     df = pd.DataFrame(cleaned, columns=COLS_2014)
+
     df.insert(0, "Település", name)
-    df.insert(0, "Megye", "")
+    df.insert(0, "Megye", megye)
+
     df["Forrás URL"] = v22_url
     df["Év"] = "2014"
+
     return df
 
 

@@ -1,62 +1,127 @@
-
-import subprocess
 import sys
 from pathlib import Path
+from config import PROCESSED_DATA_DIR, FILE_2022, FILE_2026
+import pandas as pd
 
-# A projekt gyökérkönyvtára
 PROJECT_ROOT = Path(__file__).resolve().parent
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 
-# A config.py és a projekt többi moduljának elérhetővé tétele
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(SCRIPTS_DIR))
 
-# A futtatandó scriptek, a megadott sorrendben
-SCRIPTS = [
-    "megyek.py",
-    "telepulesek.py",
-    "megegyezo_cimek.py",
-    "szavazokorok.py",
+from scripts.megyek import build as build_megyek
+from scripts.telepulesek import build as build_telepulesek
+from scripts.megegyezo_cimek import build as build_megegyezo_cimek
+from scripts.szavazokorok import build as build_szavazokorok
+
+
+# A négy script által együttesen használt oszlopok
+OSZLOPOK_2022 = [
+    "MEGYE",
+    "MEGYE_KÓD",
+    "TELEPÜLÉS_KÓD",
+    "TELEPÜLÉS",
+    "KÖZTERÜLET_NÉV",
+    "KÖZTERÜLET_JELLEG",
+    "HÁZSZÁM",
+    "ÉPÜLET",
+    "LÉPCSŐHÁZ",
+    "SZAVAZÓKÖR_SORSZÁM",
+    "SZAVAZÓKÖR_CÍM",
+    "OEVK",
+]
+
+OSZLOPOK_2026 = [
+    "Vármegye kód",
+    "Település kód",
+    "Közterület név",
+    "Közterület jelleg",
+    "Házszám",
+    "Épület",
+    "Lépcsőház",
+    "Szavazókör",
+    "Szavazókör cím",
+    "OEVK",
 ]
 
 
+def csv_beolvasasa(fajl, szukseges_oszlopok):
+    """
+    CSV egyszeri beolvasása.
+    Automatikusan felismeri az elválasztójelet,
+    és csak a szükséges oszlopokat tölti be.
+    """
+
+    print(f"Oszlopok ellenőrzése: {fajl.name}")
+
+    # Fejléc beolvasása az elválasztójel felismeréséhez
+    fejlec = pd.read_csv(
+        fajl,
+        sep=None,
+        engine="python",
+        encoding="utf-8-sig",
+        nrows=0,
+    )
+
+    elerheto_oszlopok = [
+        oszlop.strip() for oszlop in fejlec.columns
+    ]
+
+    hianyzo = [
+        oszlop
+        for oszlop in szukseges_oszlopok
+        if oszlop not in elerheto_oszlopok
+    ]
+
+    if hianyzo:
+        raise ValueError(
+            f"A(z) {fajl.name} fájlból hiányoznak a szükséges oszlopok: "
+            f"{hianyzo}\n"
+            f"Elérhető oszlopok: {elerheto_oszlopok}"
+        )
+
+    print(f"Adatok beolvasása: {fajl.name}")
+
+    # A tényleges adatokat már csak egyszer olvassuk be.
+    df = pd.read_csv(
+        fajl,
+        sep=None,
+        engine="python",
+        encoding="utf-8-sig",
+        dtype=str,
+        usecols=lambda oszlop: oszlop.strip() in szukseges_oszlopok,
+    )
+
+    # Oszlopnevek és értékek tisztítása
+    df.columns = df.columns.str.strip()
+
+    for oszlop in df.columns:
+        df[oszlop] = (
+            df[oszlop]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
+
+    return df
+
+
 def main():
-    for script_name in SCRIPTS:
-        script_path = SCRIPTS_DIR / script_name
 
-        if not script_path.exists():
-            print(f"HIBA: Nem található a fájl: {script_path}")
-            sys.exit(1)
+    PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-        print(f"\n{'=' * 60}")
-        print(f"Futtatás: {script_name}")
-        print(f"{'=' * 60}")
+    print("2022-es adatbázis beolvasása...")
+    adat22 = csv_beolvasasa(FILE_2022, OSZLOPOK_2022)
 
-        # A projekt gyökérkönyvtárát hozzáadjuk a PYTHONPATH-hoz
-        env = None
-        import os
-        env = os.environ.copy()
-        env["PYTHONPATH"] = (
-            str(PROJECT_ROOT)
-            + os.pathsep
-            + env.get("PYTHONPATH", "")
-        )
+    print("2026-os adatbázis beolvasása...")
+    adat26 = csv_beolvasasa(FILE_2026, OSZLOPOK_2026)
 
-        result = subprocess.run(
-            [sys.executable, str(script_path)],
-            cwd=PROJECT_ROOT,
-            env=env,
-        )
+    build_megyek(adat22)
+    build_telepulesek(adat22)
+    build_megegyezo_cimek(adat22, adat26)
+    build_szavazokorok(adat22, adat26)
 
-        if result.returncode != 0:
-            print(
-                f"\nHIBA: A(z) {script_name} futtatása sikertelen "
-                f"(kilépési kód: {result.returncode})."
-            )
-            sys.exit(result.returncode)
-
-        print(f"Sikeresen lefutott: {script_name}")
-
-    print("\nAz összes táblakészítő script sikeresen lefutott!")
+    print("\nAz összes tábla sikeresen elkészült!")
 
 
 if __name__ == "__main__":
