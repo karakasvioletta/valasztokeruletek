@@ -263,6 +263,91 @@ def build(adat22=None, adat26=None):
         + elteresek["település_kód"].fillna("")
     )
 
+    csak_2022_cimek = osszefesult.loc[csak_2022].copy()
+
+    csak_2022_cimek["település_azonosító"] = (
+        csak_2022_cimek["megye_kód"].fillna("")
+        + csak_2022_cimek["település_kód"].fillna("")
+    )
+
+    csak_2022_cimek = csak_2022_cimek[
+        [
+            "település_azonosító",
+            "közterület_neve",
+            "közterület_jellege",
+            "házszám",
+            "épület",
+            "lépcsőház",
+            "szavazókör_22",
+            "OEVK_22",
+        ]
+    ]
+
+    csak_2022_cimek = csak_2022_cimek.sort_values(
+        [
+            "település_azonosító",
+            "közterület_neve",
+            "házszám",
+        ],
+        na_position="last",
+    ).reset_index(drop=True)
+
+    csak_2022_cimek.to_csv(
+        PROCESSED_DATA_DIR / "csak_2022_cimek.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
+
+    print(
+        f"\nCsak 2022-ben szereplő címek: "
+        f"{len(csak_2022_cimek):,}"
+    )
+
+
+    # ==================================================
+    # 6/B. CSAK 2026-BAN SZEREPLŐ CÍMEK
+    # ==================================================
+
+    csak_2026_cimek = osszefesult.loc[csak_2026].copy()
+
+    csak_2026_cimek["település_azonosító"] = (
+        csak_2026_cimek["megye_kód"].fillna("")
+        + csak_2026_cimek["település_kód"].fillna("")
+    )
+
+    csak_2026_cimek = csak_2026_cimek[
+        [
+            "település_azonosító",
+            "közterület_neve",
+            "közterület_jellege",
+            "házszám",
+            "épület",
+            "lépcsőház",
+            "szavazókör_26",
+            "OEVK_26",
+        ]
+    ]
+
+    csak_2026_cimek = csak_2026_cimek.sort_values(
+        [
+            "település_azonosító",
+            "közterület_neve",
+            "házszám",
+        ],
+        na_position="last",
+    ).reset_index(drop=True)
+
+    csak_2026_cimek.to_csv(
+        PROCESSED_DATA_DIR / "csak_2026_cimek.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
+
+    print(
+        f"Csak 2026-ban szereplő címek: "
+        f"{len(csak_2026_cimek):,}"
+    )
+
     # A csak az egyik évben szereplő címeknél
     # jelöljük, melyik adatbázisban találhatók.
     elteresek["adatforrás"] = elteresek["_merge"].map({
@@ -331,13 +416,25 @@ def build(adat22=None, adat26=None):
     print(f"Összes eltérő rekord: {len(elteresek):,}")
     print(f"Eltérések fájlja: {elteres_kimenet}")
 
+    eredmeny = osszefesult[
+        osszefesult["_merge"] == "both"
+    ].copy()
+
+    # Az összefésülés technikai jelölőoszlopának eltávolítása
+    eredmeny = eredmeny.drop(columns=["_merge"])
+
+    eredmeny["település_azonosító"] = (
+        eredmeny["megye_kód"].fillna("").astype(str)
+        + eredmeny["település_kód"].fillna("").astype(str)
+    )
+
     # ==================================================
     # 7. KIMENETI OSZLOPOK
     # ==================================================
 
     eredmeny = eredmeny[
         [
-            "település_azonosító_22",
+            "település_azonosító",
             "közterület_neve",
             "közterület_jellege",
             "házszám",
