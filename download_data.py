@@ -794,6 +794,27 @@ def main():
     log("\\nKész. Kimeneti mappa: " + str(OUT.resolve()))
     log("Ha valamelyik év kimaradt, ellenőrizd a hibak.txt fájlt.")
 
+     # A további feldolgozáshoz szükséges fájlok ellenőrzése
+    kotelezo_fajlok = [
+        OUT / "2022_korzetadatok.csv",
+        OUT / "2026_korzetadatok.csv",
+    ]
+
+    hianyzo_fajlok = [
+        fajl for fajl in kotelezo_fajlok
+        if not fajl.exists()
+    ]
+
+    if hianyzo_fajlok:
+        log("\nA szükséges adatfájlok közül nem készült el mindegyik:")
+        for fajl in hianyzo_fajlok:
+            log(f"  - {fajl.name}")
+
+        return False
+
+    log("\nA további feldolgozáshoz szükséges adatok rendelkezésre állnak.")
+    return True
+
 
 if __name__ == "__main__":
     main()  
