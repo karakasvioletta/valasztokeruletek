@@ -9,10 +9,10 @@ SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from scripts.megyek import build as build_megyek
-from scripts.telepulesek import build as build_telepulesek
-from scripts.megegyezo_cimek import build as build_megegyezo_cimek
-from scripts.szavazokorok import build as build_szavazokorok
+from scripts.alap_tablak.megyek import build as build_megyek
+from scripts.alap_tablak.telepulesek import build as build_telepulesek
+from scripts.alap_tablak.szavazokorok import build as build_szavazokorok
+
 
 
 # A négy script által együttesen használt oszlopok
@@ -21,6 +21,7 @@ OSZLOPOK_2022 = [
     "MEGYE_KÓD",
     "TELEPÜLÉS_KÓD",
     "TELEPÜLÉS",
+    "PIR",
     "KÖZTERÜLET_NÉV",
     "KÖZTERÜLET_JELLEG",
     "HÁZSZÁM",
@@ -34,6 +35,7 @@ OSZLOPOK_2022 = [
 OSZLOPOK_2026 = [
     "Vármegye kód",
     "Település kód",
+    "PIR",
     "Közterület név",
     "Közterület jelleg",
     "Házszám",
@@ -118,10 +120,8 @@ def main():
 
     build_megyek(adat22)
     build_telepulesek(adat22)
-    build_megegyezo_cimek(adat22, adat26)
     build_szavazokorok(adat22, adat26)
 
-    print("\nAz összes tábla sikeresen elkészült!")
 
 
 if __name__ == "__main__":

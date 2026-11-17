@@ -8,6 +8,11 @@ PROJECT_DIR = Path(__file__).resolve().parent
 DATA_DIR = PROJECT_DIR / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
+REFERENCE_TABLES_DIR = PROCESSED_DATA_DIR / "reference_tables"
+COMPARISON_DIR = PROCESSED_DATA_DIR / "comparison"
+DIFFERENCES_DIR = PROCESSED_DATA_DIR / "differences"
+MATCHES_DIR = PROCESSED_DATA_DIR / "matches"
+
 
 # Forrásfájlok
 FILE_2022 = RAW_DATA_DIR / "2022_korzetadatok.csv"

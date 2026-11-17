@@ -1,5 +1,5 @@
 import pandas as pd
-from config import PROCESSED_DATA_DIR, FILE_2022
+from config import REFERENCE_TABLES_DIR, FILE_2022
 
 def build(adat22):
     if adat22 is None:
@@ -21,7 +21,7 @@ def build(adat22):
         ]:
             adat22[oszlop] = adat22[oszlop].fillna("").str.strip()
     
-    kimenet = PROCESSED_DATA_DIR / "telepulesek.csv"
+    kimenet = REFERENCE_TABLES_DIR / "telepulesek.csv"
 
     # Szükséges oszlopok kiválasztása
     df = adat22[

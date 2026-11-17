@@ -4,10 +4,10 @@ from pathlib import Path
 import pandas as pd
 
 # A projekt gyökérmappájának hozzáadása a Python keresési útvonalához
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from config import PROCESSED_DATA_DIR, FILE_2022, FILE_2026
+from config import MATCHES_DIR, FILE_2022, FILE_2026
 
 
 def build(adat22=None, adat26=None):
@@ -32,7 +32,8 @@ def build(adat22=None, adat26=None):
         )
         adat26.columns = adat26.columns.str.strip()
 
-    kimenet = PROCESSED_DATA_DIR / "egyezo_cimek_22_26.csv"
+    kimenet = MATCHES_DIR / "egyezo_cimek_22_26.csv"
+    kimenet.parent.mkdir(parents=True, exist_ok=True)
 
     print(f"2022-es sorok: {len(adat22):,}")
     print(f"2026-os sorok: {len(adat26):,}")
@@ -44,6 +45,7 @@ def build(adat22=None, adat26=None):
     oszlopok22 = [
         "MEGYE_KÓD",
         "TELEPÜLÉS_KÓD",
+        "PIR",
         "KÖZTERÜLET_NÉV",
         "KÖZTERÜLET_JELLEG",
         "HÁZSZÁM",
@@ -56,6 +58,7 @@ def build(adat22=None, adat26=None):
     oszlopok26 = [
         "Vármegye kód",
         "Település kód",
+        "PIR",
         "Közterület név",
         "Közterület jelleg",
         "Házszám",
@@ -105,6 +108,7 @@ def build(adat22=None, adat26=None):
     kulcsok = [
         "megye_kód",
         "település_kód",
+        "PIR",
         "közterület_neve",
         "közterület_jellege",
         "házszám",
@@ -146,6 +150,7 @@ def build(adat22=None, adat26=None):
     vizsgalt_kulcsok = [
         "megye_kód",
         "település_kód",
+        "PIR",
         "közterület_neve",
         "közterület_jellege",
         "házszám",
@@ -273,6 +278,7 @@ def build(adat22=None, adat26=None):
     csak_2022_cimek = csak_2022_cimek[
         [
             "település_azonosító",
+            "PIR",
             "közterület_neve",
             "közterület_jellege",
             "házszám",
@@ -293,7 +299,7 @@ def build(adat22=None, adat26=None):
     ).reset_index(drop=True)
 
     csak_2022_cimek.to_csv(
-        PROCESSED_DATA_DIR / "csak_2022_cimek.csv",
+        MATCHES_DIR / "csak_2022_cimek.csv",
         index=False,
         encoding="utf-8-sig",
     )
@@ -318,6 +324,7 @@ def build(adat22=None, adat26=None):
     csak_2026_cimek = csak_2026_cimek[
         [
             "település_azonosító",
+            "PIR",
             "közterület_neve",
             "közterület_jellege",
             "házszám",
@@ -338,7 +345,7 @@ def build(adat22=None, adat26=None):
     ).reset_index(drop=True)
 
     csak_2026_cimek.to_csv(
-        PROCESSED_DATA_DIR / "csak_2026_cimek.csv",
+        MATCHES_DIR / "csak_2026_cimek.csv",
         index=False,
         encoding="utf-8-sig",
     )
@@ -387,7 +394,7 @@ def build(adat22=None, adat26=None):
 
     # Eltérések mentése külön CSV-be
     elteres_kimenet = (
-        PROCESSED_DATA_DIR / "eltero_cimek_22_26.csv"
+        MATCHES_DIR / "eltero_cimek_22_26.csv"
     )
 
     elteresek.to_csv(
@@ -435,6 +442,7 @@ def build(adat22=None, adat26=None):
     eredmeny = eredmeny[
         [
             "település_azonosító",
+            "PIR",
             "közterület_neve",
             "közterület_jellege",
             "házszám",
@@ -452,6 +460,7 @@ def build(adat22=None, adat26=None):
     eredmeny = eredmeny.sort_values(
         [
             "település_azonosító",
+            "PIR",
             "közterület_neve",
             "közterület_jellege",
             "házszám",

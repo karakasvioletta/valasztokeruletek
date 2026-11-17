@@ -1,5 +1,5 @@
 import pandas as pd
-from config import PROCESSED_DATA_DIR, FILE_2022, FILE_2026
+from config import REFERENCE_TABLES_DIR, FILE_2022, FILE_2026
 
 
 def build(adat22=None, adat26=None):
@@ -36,8 +36,8 @@ def build(adat22=None, adat26=None):
             ],
         )
 
-    kimenet22_fajl = PROCESSED_DATA_DIR / "szavazokorok_2022.csv"
-    kimenet26_fajl = PROCESSED_DATA_DIR / "szavazokorok_2026.csv"
+    kimenet22_fajl = REFERENCE_TABLES_DIR / "szavazokorok_2022.csv"
+    kimenet26_fajl = REFERENCE_TABLES_DIR / "szavazokorok_2026.csv"
 
     # ==================================================
     # 2022-ES SZAVAZÓKÖRÖK
@@ -144,7 +144,7 @@ def build(adat22=None, adat26=None):
     print("\nElkészült a két szavazóköri fájl!")
     print(f"2022-es rekordok száma: {len(kimenet22):,}")
     print(f"2026-os rekordok száma: {len(kimenet26):,}")
-    print("Mentési hely:", PROCESSED_DATA_DIR)
+    print("Mentési hely:", REFERENCE_TABLES_DIR)
 
 if __name__ == "__main__":
     build()
